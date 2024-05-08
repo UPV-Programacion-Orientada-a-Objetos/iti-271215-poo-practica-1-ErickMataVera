@@ -46,54 +46,30 @@ public class SQL {
         File tableFile = new File(this.rutaTrabajo, tableName + ".csv");
 
         if (tableFile.exists()) {
-            System.out.println("La tabla ya existe");
+            System.out.println("la tabla ya existe en la base de datos, intente con otro nombre");
             return;
         }
 
-        String[] columnDefinitions = columns.split(",");
-        StringBuilder headerBuilder = new StringBuilder();
-        for (String columnDefinition : columnDefinitions) {
-            String[] parts = columnDefinition.trim().split("\\s+");
-            String columnName = parts[0];
-            String dataType = parts[1];
+        String []columnasSeparadas= columns.trim().split(",");//separar columas
+        StringBuilder cabezeras = new StringBuilder();//cabezeras
+        for (String columnita : columnasSeparadas) {
 
-            // Aplicar restricciones
-            if (columnDefinition.contains("NOT NULL")) {
-                // Aplicar restricción NOT NULL
-            }
+            String []partes = columnita.trim().split("\\s+");//sacar del string 2 partes creando un string que se llame partes
 
-            Class<?> javaType = createTipoDato.get(dataType);
-            if (javaType == null) {
-                System.out.println("Tipo de datos no compatible: " + dataType);
-                return;
-            }
+            String nombreColumna = partes[0];
+            String tipoDato= partes[1];
 
-            headerBuilder.append(columnName).append(",");
+            cabezeras.append(nombreColumna).append(",");
         }
-        headerBuilder.deleteCharAt(headerBuilder.length() - 1);
+        cabezeras.deleteCharAt(cabezeras.length() - 1);
 
         try (FileWriter fw = new FileWriter(tableFile)) {
-            fw.write(headerBuilder.toString());
+            fw.write(cabezeras.toString());
             System.out.println("Tabla creada");
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
     }
-
-    //Mapeos de datos------------------------------------------------
-    private final Map<String,Class<?>> createTipoDato= new HashMap<>();
-    {
-        createTipoDato.put("INT",Integer.class);
-    }
-
-    private final Map<String,Class<?>>createTipoKey =  new HashMap<>();
-    {
-        createTipoKey.put("NOT NULL", Boolean.class);
-        createTipoKey.put("PRIMARY KEY",Boolean.class);
-    }
-    //Fin de mapeos de datos-------------------------------------------
-
-
 
     //COMANDO_BORRAR
     public void dropTable(String tableName) throws IOException {
@@ -120,8 +96,8 @@ public class SQL {
     }
 
 
-    //SOLO_USARSE_PARA_PRUEBAS_NO_ES_PARTE_DE_SQL
-    public   void showTableData(String tableName) {
+    //COMANDO SELECT
+    public   void select(String tableName) {
         String csvFilePath = this.rutaTrabajo + "/" + tableName + ".csv";
 
         try (BufferedReader reader = new BufferedReader(new FileReader(csvFilePath))) {
@@ -139,31 +115,40 @@ public class SQL {
     }
 
 
-    public void executeSQL(String sql) throws IOException {
+    public void lineaComandos(String sql) throws IOException {
         Matcher comparacion;
 
-        if ((comparacion = Pattern.compile("^USE (.+);$",Pattern.CASE_INSENSITIVE).matcher(sql)).find()) {
+        if ((comparacion = Pattern.compile("USE (.+);$",Pattern.CASE_INSENSITIVE).matcher(sql)).find()) {
             String path = comparacion.group(1);
             use(path);
             return;
         }
 
-
-        if ((comparacion = Pattern.compile("^DROP TABLE (\\w+);$",Pattern.CASE_INSENSITIVE).matcher(sql)).find()) {
+        if ((comparacion = Pattern.compile("DROP TABLE (\\w+);$",Pattern.CASE_INSENSITIVE).matcher(sql)).find()) {
             String tableName = comparacion.group(1);
             dropTable(comparacion.group(1));
             return;
         }
 
-        if ((comparacion = Pattern.compile("^SHOW TABLES;$",Pattern.CASE_INSENSITIVE).matcher(sql)).find()) {
+        if ((comparacion = Pattern.compile("SHOW TABLES;$",Pattern.CASE_INSENSITIVE).matcher(sql)).find()) {
             showTables();
             return;
         }
 
-        //acuerdate que asi no se muestran las tablas, esto namas es porque aun no sabes como hacer lo del select xd
-        if((comparacion = Pattern.compile("^SELECT (.+) FROM (.+);$",Pattern.CASE_INSENSITIVE).matcher(sql)).find()){
+
+        if((comparacion = Pattern.compile("SELECT\\s+\\*\\s+FROM (.+);$",Pattern.CASE_INSENSITIVE).matcher(sql)).find()){
             String tableName = comparacion.group(1);
-            showTableData(tableName);
+            System.out.println(comparacion.group(1));
+            select(tableName);
+            return;
+        }
+
+
+
+        if ((comparacion = Pattern.compile("CREATE TABLE (\\w+) \\((.+)\\);$", Pattern.CASE_INSENSITIVE).matcher(sql)).find()) {
+            String tableName = comparacion.group(1);
+            String columnDefinitions = comparacion.group(2);
+            createTable(tableName, columnDefinitions);
             return;
         }
 

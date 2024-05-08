@@ -16,7 +16,7 @@ public class Comandos extends SQL{
             }
         });
         comandos.put("CREATE TABLE",()->createTable("Erick","edad"));
-        comandos.put("DATA",()->showTableData("Erick"));
+        comandos.put("DATA",()->select("Erick"));
     }
 
     public void lineaComandos(String comando) {
