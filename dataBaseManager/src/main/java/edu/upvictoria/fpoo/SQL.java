@@ -15,6 +15,7 @@ public class SQL {
     public SQL(String rutaTrabajo) {this.rutaTrabajo = rutaTrabajo;}
 
 
+
     public void use(String path){
         File directorio = new File(path);
 
@@ -29,9 +30,9 @@ public class SQL {
     //COMANDO_PARA_MOSTRAR
     public void showTables() {
         File [] files = new File(this.rutaTrabajo).listFiles();
-        if(files != null){
-            for (File file : files) {
-                if(file.isFile() && file.getName().endsWith("csv")){
+        if(files!=null){
+            for(File file : files){
+                if(file.exists()&& file.getName().endsWith(".csv")){
                     System.out.println(file.getName());
                 }
             }
@@ -42,30 +43,47 @@ public class SQL {
 
 
     //COMANDO_CREAR_TABLAS
-    public void createTable(String tableName, String columns) {
-        File tableFile = new File(this.rutaTrabajo, tableName + ".csv");
 
-        if (tableFile.exists()) {
-            System.out.println("la tabla ya existe en la base de datos, intente con otro nombre");
+
+
+    public void createTable(String nombreTabla, String columnas) {
+        File table = new File(this.rutaTrabajo, nombreTabla + ".csv");
+
+        if (table.exists()) {
+            System.out.println("La tabla ya existe");
             return;
         }
 
-        String []columnasSeparadas= columns.trim().split(",");//separar columas
-        StringBuilder cabezeras = new StringBuilder();//cabezeras
-        for (String columnita : columnasSeparadas) {
+        String[] columnasSeparadas = columnas.trim().split(",");
+        StringBuilder cabeceras = new StringBuilder();
 
-            String []partes = columnita.trim().split("\\s+");//sacar del string 2 partes creando un string que se llame partes
+        File archivoTipos = new File(this.rutaTrabajo, nombreTabla + "_tipos.csv");
 
-            String nombreColumna = partes[0];
-            String tipoDato= partes[1];
+        try (FileWriter fwTipos = new FileWriter(archivoTipos)) {
+            fwTipos.write("columna,tipo de dato,Obligatorio,Llave\n");
 
-            cabezeras.append(nombreColumna).append(",");
-        }
-        cabezeras.deleteCharAt(cabezeras.length() - 1);
+            for (String columna : columnasSeparadas) {
+                String[] partes = columna.trim().split("\\s+");
 
-        try (FileWriter fw = new FileWriter(tableFile)) {
-            fw.write(cabezeras.toString());
-            System.out.println("Tabla creada");
+                String nombreColumna = partes[0];
+                String tipoDato = partes[1];
+                String obligatorio = partes[2];
+                String llave = partes[3];
+                //te habientas validaciones de esta cosa por dato, ya que si ingresa un dato que no es pues lo retachas
+
+                cabeceras.append(nombreColumna).append(",");
+                fwTipos.append(nombreColumna).append(",").append(tipoDato).append(",").append(obligatorio).append(",").append(llave).append(",");
+                System.out.println();
+            }
+
+            cabeceras.deleteCharAt(cabeceras.length() - 1);
+
+            try (FileWriter fw = new FileWriter(table)) {
+                fw.write(cabeceras.toString());
+                System.out.println("Tabla creada");
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
@@ -74,27 +92,25 @@ public class SQL {
     //COMANDO_BORRAR
     public void dropTable(String tableName) throws IOException {
         File table =  new File(this.rutaTrabajo,tableName + ".csv");
-        System.out.print("¿Deseas eliminar la tabla?" + "S/N:");
 
+        System.out.println("Estas seguro que deseas eliminar la tabla: S/N");
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String dec = null;
 
-        try {
-            dec = br.readLine().toLowerCase();
+        try{
+             dec = br.readLine().toLowerCase();
         }catch (Exception e){
             System.out.println(e.getMessage());
         }finally {
             br.close();
         }
 
-        if (dec.equals("s")) {
+        if(dec.equals("s")){
             table.delete();
-            System.out.println("La tabla ha sido eliminada");
-        } else {
-            System.out.println("Operacion cancelada");
+        }else{
+            System.out.println("tabla no eliminada");
         }
     }
-
 
     //COMANDO SELECT
     public   void select(String tableName) {
@@ -110,7 +126,7 @@ public class SQL {
                 System.out.println();
             }
         } catch (IOException e) {
-            System.out.println("Error " + tableName + "': " + e.getMessage());
+            System.out.println(e.getMessage());
         }
     }
 
@@ -145,11 +161,15 @@ public class SQL {
 
 
 
-        if ((comparacion = Pattern.compile("CREATE TABLE (\\w+) \\((.+)\\);$", Pattern.CASE_INSENSITIVE).matcher(sql)).find()) {
+        if ((comparacion = Pattern.compile("CREATE TABLE (\\w+) \\((.+)\\);", Pattern.CASE_INSENSITIVE).matcher(sql)).find()) {
             String tableName = comparacion.group(1);
-            String columnDefinitions = comparacion.group(2);
-            createTable(tableName, columnDefinitions);
-            return;
+            String columnasSeparadas = comparacion.group(2).trim();
+            System.out.println(columnasSeparadas);
+
+            if (columnasSeparadas != null) {
+                createTable(tableName, columnasSeparadas);
+                return;
+            }
         }
 
         System.out.println("Comando no reconocido: " + sql);
