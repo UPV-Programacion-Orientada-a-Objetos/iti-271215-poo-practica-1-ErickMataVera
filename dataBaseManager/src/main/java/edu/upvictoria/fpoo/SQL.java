@@ -56,6 +56,7 @@ public class SQL {
 
         String[] columnasSeparadas = columnas.trim().split(",");
         StringBuilder cabeceras = new StringBuilder();
+        System.out.println(columnasSeparadas.length);
 
         File archivoTipos = new File(this.rutaTrabajo, nombreTabla + "_tipos.csv");
 

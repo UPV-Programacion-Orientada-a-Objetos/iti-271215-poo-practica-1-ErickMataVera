@@ -31,12 +31,10 @@ public class SQLTest {
     //Test show tables
     @Test
     void testShowTables_ExistenTablas() {
-        //instancia de SQL y establecer la ruta de trabajo
         SQL sql = new SQL();
         String rutaExistente = "/home/erick/Escritorio/f";
         sql.use(rutaExistente);
 
-        // Cdirectorio ficticio con archivos CSV
         File directorio = new File(rutaExistente);
         directorio.mkdir();
         File tabla1 = new File(rutaExistente, "tabla1.csv");
@@ -48,14 +46,11 @@ public class SQLTest {
             fail("No se pudo crear los archivos CSV para el test.");
         }
 
-        // Redirigir la salida estándar a un stream para capturarla
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
 
-        // Llamar al método showTables
         sql.showTables();
 
-        // Restaurar la salida estándar
         System.setOut(System.out);
 
         String expectedOutput = "tabla1.csv\ntabla2.csv\n";
