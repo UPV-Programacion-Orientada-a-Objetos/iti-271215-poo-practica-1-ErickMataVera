@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -11,66 +12,71 @@ import static org.junit.jupiter.api.Assertions.*;
 public class SQLTest {
     //Test metodo use
     @Test
-    void testUse_RutaExistente() {
+    public void testUsarDirectorioExistente() {
         SQL sql = new SQL();
-        String rutaExistente = "/home/erick/Escritorio/f";
+        String path = "/home";
+        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outContent));
 
-        sql.use(rutaExistente);
+        sql.use(path);
+
+        assertEquals("Ruta establecida correctamente\n", outContent.toString());
     }
-    //--
-    @Test
-    void testUse_RutaInexistente() {
-        SQL sql = new SQL();
-        String rutaInexistente = "/home/erick/Escritorio/ff";
 
-        sql.use(rutaInexistente);
+    @Test
+    public void testUsarDirectorioNoExistente() {
+        SQL sql = new SQL();
+        String path = "/path/to/non/existing/directory";
+        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outContent));
+
+        sql.use(path);
+
+        assertEquals("El directorio no existe o no es un directorio válido\n", outContent.toString());
     }
-    //FIn metodo use
 
-
-    //Test show tables
     @Test
-    void testShowTables_ExistenTablas() {
+    public void testUsarRutaNula() {
+        // Arrange
         SQL sql = new SQL();
-        String rutaExistente = "/home/erick/Escritorio/f";
-        sql.use(rutaExistente);
+        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outContent));
 
-        File directorio = new File(rutaExistente);
-        directorio.mkdir();
-        File tabla1 = new File(rutaExistente, "tabla1.csv");
-        File tabla2 = new File(rutaExistente, "tabla2.csv");
-        try {
-            tabla1.createNewFile();
-            tabla2.createNewFile();
-        } catch (Exception e) {
-            fail("No se pudo crear los archivos CSV para el test.");
-        }
+        sql.use(null);
 
+      assertEquals("La ruta proporcionada es nula\n", outContent.toString());
+    }
+
+
+    //test de create table
+
+    @Test
+    public void testMostrarTablasConDirectorioValido() {
+        // Configurar el entorno de prueba
+        SQL sql = new SQL();
+        String existingDirectory = "/home";
+        sql.use(existingDirectory);
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
 
         sql.showTables();
-
-        System.setOut(System.out);
 
         String expectedOutput = "tabla1.csv\ntabla2.csv\n";
+        assertEquals(expectedOutput, outContent.toString());
     }
-    //----
-    @Test
-    void testShowTables_NoExistenTablas() {
-        SQL sql = new SQL();
-        String rutaExistente = "/home/erick/Escritorio/f";
-        sql.use(rutaExistente);
 
+    @Test
+    public void testMostrarTablasConDirectorioInvalido() {
+        SQL sql = new SQL();
+        String nonExistingDirectory = "/path/to/non/existing/directory";
+        sql.use(nonExistingDirectory);
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
 
         sql.showTables();
 
-        System.setOut(System.out);
-
+        String expectedOutput = "La ruta de trabajo no está inicializada correctamente\n";
+        assertEquals(expectedOutput, outContent.toString());
     }
-    //Fin show tables test
-
 
 }

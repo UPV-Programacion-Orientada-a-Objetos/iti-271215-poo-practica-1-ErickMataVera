@@ -6,8 +6,8 @@ import java.io.InputStreamReader;
 
 public class App {
     public static void main(String[] args) {
-        SQL sql = new SQL();
-        sql.use("/home/erick/Escritorio/f");
+        Comandos comandos = new Comandos();
+        comandos.use("/home/erick/Escritorio/f");
 
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String input;
@@ -20,10 +20,8 @@ public class App {
                 if (input.equals("LOL")) {
                     break;
                 }
-
-                sql.lineaComandos(input);
+                comandos.lineaComandos(input);
             }
-
             br.close();
         } catch (IOException e) {
             System.out.println(e.getMessage());
