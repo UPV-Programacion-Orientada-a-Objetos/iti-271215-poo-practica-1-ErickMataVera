@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 public class App {
     public static void main(String[] args) {
         Comandos comandos = new Comandos();
-        comandos.use("/home/erick/Escritorio/f");
+        comandos.use("/home/erick/Escritorio/f"); //para no poner la ruta a cada rato xd
 
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String input;

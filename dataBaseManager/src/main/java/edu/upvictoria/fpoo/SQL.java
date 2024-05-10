@@ -19,6 +19,7 @@ public class SQL {
         this.rutaTrabajo = rutaTrabajo;
     }
 
+    //COMANDO USE
     public void use(String path) {
         if (path == null) {
             System.out.println("La ruta proporcionada es nula");
@@ -75,7 +76,7 @@ public class SQL {
                 return;
             }
 
-            String[] columnasSeparadas = columns.split(",");
+            String[] columnasSeparadas = columns.split(",");//AQUI LO SEPARAS REY ACUERDATE
             StringBuilder cabeceras = new StringBuilder();
 
             for (String columna : columnasSeparadas) {
@@ -84,7 +85,7 @@ public class SQL {
 
                 cabeceras.append(columName).append(",");
             }
-            cabeceras.deleteCharAt(cabeceras.length() - 1);
+            cabeceras.deleteCharAt(cabeceras.length() - 1);//ACUERDATE QUE EL BUENO ES STRING BUILDER
 
             try (FileWriter fw = new FileWriter(tableFile)) {
                 fw.write(cabeceras.toString());
@@ -99,7 +100,7 @@ public class SQL {
     public void dropTable(String tableName) {
         File table = new File(this.rutaTrabajo, tableName + ".csv");
 
-        System.out.println("¿Estás seguro de que deseas eliminar la tabla? (S/N)");
+        System.out.println("¿Estás seguro de que deseas eliminar la tabla? S/n)");
         try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
             String dec = br.readLine().toLowerCase();
 
@@ -181,7 +182,8 @@ public class SQL {
                 }
             }
 
-            // Construir la línea de valores a insertar
+
+            //AQUI CONSTRUYES LA LINEA DE VALORES A INSERTAR
             StringBuilder newLine = new StringBuilder();
             for (String columnValue : columnValues) {
                 newLine.append(columnValue.trim()).append(",");
@@ -197,7 +199,7 @@ public class SQL {
         }
     }
 
-
+    //SOLO FUNCIONA PARA CONDICIONALES SIMPLES
     private boolean evaluarCondicion(String[] rowValues, String condition) {
         String[] parts = condition.split("=");
         if (parts.length == 2) {
@@ -219,11 +221,12 @@ public class SQL {
                 return false;
             }
         } else {
-            System.out.println("La condición no tiene el formato correcto");
+            System.out.println("La condicin no tiene el formato correcto");
             return false;
         }
     }
 
+    //COMANDO DELETE
     public void deleteFromTable(String tableName, String condition) {
         File tableFile = new File(this.rutaTrabajo, tableName + ".csv");
         File tempFile = new File(this.rutaTrabajo, "temp.csv");
