@@ -34,7 +34,6 @@ public class SQLTest {
 
     @Test
     public void testUsarRutaNula() {
-        // Arrange
         SQL sql = new SQL();
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
@@ -45,11 +44,9 @@ public class SQLTest {
     }
 
 
-    //test de create table
 
     @Test
     public void testMostrarTablasConDirectorioValido() {
-        // Configurar el entorno de prueba
         SQL sql = new SQL();
         String existingDirectory = "/home";
         sql.use(existingDirectory);
@@ -90,7 +87,6 @@ public class SQLTest {
 
     @Test
     public void testCreateTable_TablaExistente() {
-        // Arrange
         SQL sql = new SQL();
         String tableName = "hola";
         String columns = "id INT, name VARCHAR(50), age INT";
@@ -110,7 +106,6 @@ public class SQLTest {
 
             System.setOut(System.out);
 
-            // Assert: Verificar si se imprimió el mensaje correcto
             assertEquals("Ya existe una tabla con ese nombre, no se pueden tener dos tablas con el mismo nombre\n", outputStream.toString());
         } catch (IOException e) {
             e.printStackTrace();
@@ -191,7 +186,6 @@ public class SQLTest {
 
         sql.deleteFromTable("non_existing_table", "condition");
 
-        // Assert
         assertTrue(errorStreamCaptor.toString().contains("Error al procesar el archivo: non_existing_table.csv (No existe el archivo o el directorio)\n"));
     }
 
