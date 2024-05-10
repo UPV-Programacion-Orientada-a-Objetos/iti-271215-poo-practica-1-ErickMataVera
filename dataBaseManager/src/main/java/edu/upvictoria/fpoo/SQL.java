@@ -2,13 +2,15 @@ package edu.upvictoria.fpoo;
 
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.SQLOutput;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
 public class SQL {
-    private String rutaTrabajo;
+    public String rutaTrabajo;
 
     public SQL() {
     }
@@ -63,61 +65,57 @@ public class SQL {
         }
     }
 
-    //COMANDO_CREAR_TABLAS
+    //COMANDO CREATE
     public void createTable(String tableName, String columns) {
         File tableFile = new File(this.rutaTrabajo, tableName + ".csv");
 
-        if (tableFile.exists()) {
-            System.out.println("La tabla ya existe, no puede haber dos tablas con el mismo nombre");
-            return;
-        }
+        try {
+            if (tableFile.exists()) {
+                System.out.println("Ya existe una tabla con ese nombre, no se pueden tener dos tablas con el mismo nombre");
+                return;
+            }
 
-        //divido el string delimitida por ,
-        String [] columnasSeparadas = columns.split(",");
-        StringBuilder cabezeras= new StringBuilder(); //me permite constriur en el csv
-        //StringBuilder tipoDatoBuilder = new StringBuilder();
+            String[] columnasSeparadas = columns.split(",");
+            StringBuilder cabeceras = new StringBuilder();
 
-        for (String columna : columnasSeparadas) {
-            String [] parts = columna.trim().split("\\s+");
-            String columName = parts[0];
+            for (String columna : columnasSeparadas) {
+                String[] parts = columna.trim().split("\\s+");
+                String columName = parts[0];
 
-            cabezeras.append(columName).append(",");
-        }
-        cabezeras.deleteCharAt(cabezeras.length() - 1);
+                cabeceras.append(columName).append(",");
+            }
+            cabeceras.deleteCharAt(cabeceras.length() - 1);
 
-
-        //nos ayuda a escribir una vez que tengo cabezeras delimitado por , lo pasa al csv
-        try (FileWriter fw = new FileWriter(tableFile)) {
-            fw.write(cabezeras.toString());
-            System.out.println("tabla creada");
+            try (FileWriter fw = new FileWriter(tableFile)) {
+                fw.write(cabeceras.toString());
+                System.out.println("Tabla creada exitosamente");
+            }
         } catch (IOException e) {
-            System.out.println("error al crear la tabla:" + e.getMessage());
+            System.out.println("Error al crear la tabla: " + e.getMessage());
         }
     }
 
-
-//COMANDO_BORRAR
-    public void dropTable(String tableName) throws IOException {
+    //COMANDO DROP
+    public void dropTable(String tableName) {
         File table = new File(this.rutaTrabajo, tableName + ".csv");
 
-        System.out.println("Estas seguro que deseas eliminar la tabla: S/N");
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        String dec = null;
+        System.out.println("¿Estás seguro de que deseas eliminar la tabla? (S/N)");
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
+            String dec = br.readLine().toLowerCase();
 
-        try {
-            dec = br.readLine().toLowerCase();
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        } finally {
-            br.close();
-        }
-
-        if (dec.equals("s")) {
-            table.delete();
-            File tablaTipos = new File(rutaTrabajo, tableName + "_tipos.csv");
-            tablaTipos.delete();
-        } else {
-            System.out.println("tabla no eliminada");
+            if (dec.equals("s")) {
+                if (table.delete()) {
+                    System.out.println("Tabla eliminada correctamente.");
+                    File tablaTipos = new File(rutaTrabajo, tableName + "_tipos.csv");
+                    tablaTipos.delete();
+                } else {
+                    System.out.println("Error al eliminar la tabla.");
+                }
+            } else {
+                System.out.println("Tabla no eliminada.");
+            }
+        } catch (IOException e) {
+            System.out.println("Error de entrada/salida: " + e.getMessage());
         }
     }
 
@@ -135,10 +133,9 @@ public class SQL {
                 System.out.println();
             }
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            System.out.println("Error al leer el archivo CSV: " + e.getMessage());
         }
     }
-
 
 
     // COMANDO_INSERTAR
@@ -150,104 +147,117 @@ public class SQL {
             return;
         }
 
-        String[] columnNames = columns.split(",");//esta las ingresa el usuario no se te olvide
+        String[] columnNames = columns.split(",");
         String[] columnValues = values.split(",");
 
         if (columnNames.length != columnValues.length) {
-            System.out.println("La cantidad de columnas y valores no coinciden,verifiqu su eleccion");
+            System.out.println("La cantidad de columnas y valores no coinciden, verifique su seleccion");
             return;
         }
 
-        try (FileReader fr = new FileReader(tableFile);
-        BufferedReader br = new BufferedReader(fr)) {//recuerda que asi puede leer el nomb de la colum de un arch
+        try (FileWriter fw = new FileWriter(tableFile, true);
+             BufferedWriter bw = new BufferedWriter(fw);
+             PrintWriter pw = new PrintWriter(bw)) {
 
-            String cabLine = br.readLine();
-            String[] cabezeras = cabLine.split(",");
+            try (FileReader fr = new FileReader(tableFile);
+                 BufferedReader br = new BufferedReader(fr)) {
 
-            // si la cabecera coincide con los nombres de las columnas
-            for (String columnName : columnNames) {
-                boolean cabezaraBandera = false;    //tenemos dos for para iterarlos en la multp de ambos valores
-                for (String cabezera : cabezeras) {
-                    if (columnName.trim().equalsIgnoreCase(cabLine.trim())) {
-                        cabezaraBandera = true;
-                        break;
+                String cabLine = br.readLine();
+                String[] cabezeras = cabLine.split(",");
+
+                // Verificar si los nombres de las columnas coinciden con las cabeceras
+                for (String columnName : columnNames) {
+                    boolean cabezaraBandera = false;
+                    for (String cabecera : cabezeras) {
+                        if (columnName.trim().equalsIgnoreCase(cabecera.trim())) {
+                            cabezaraBandera = true;
+                            break;
+                        }
+                    }
+                    if (!cabezaraBandera) {
+                        System.out.println("La columna '" + columnName.trim() + "' no coincide con ninguna cabecera existente");
+                        return;
                     }
                 }
-                if (!cabezaraBandera) {
-                    System.out.println("La columna '" + columnName.trim() + "' no coincide con ninguna cabecera existente");
-                    return;
-                }
             }
 
-            try (FileWriter fw = new FileWriter(tableFile, true);
-                 BufferedWriter bw = new BufferedWriter(fw);
-                 PrintWriter pw = new PrintWriter(bw)) {
-
-                StringBuilder newLine = new StringBuilder();
-                for (String columnValue : columnValues) {
-                    newLine.append(columnValue.trim()).append(",");
-                }
-                newLine.deleteCharAt(newLine.length() - 1);
-
-                pw.println(newLine.toString());
-                System.out.println("Datos insertados correctamente en la tabla");
-            } catch (IOException e) {
-                System.out.println("Error al insertar datos en la tabla: " + e.getMessage());
+            // Construir la línea de valores a insertar
+            StringBuilder newLine = new StringBuilder();
+            for (String columnValue : columnValues) {
+                newLine.append(columnValue.trim()).append(",");
             }
+            newLine.deleteCharAt(newLine.length() - 1);
+
+            // Escribir la línea de valores en el archivo
+            pw.println(newLine.toString());
+            System.out.println("Datos insertados correctamente en la tabla");
 
         } catch (IOException e) {
-            System.out.println("Error al leer la cabecera de la tabla: " + e.getMessage());
+            System.out.println("Error al insertar datos en la tabla: " + e.getMessage());
         }
     }
 
 
+    private boolean evaluarCondicion(String[] rowValues, String condition) {
+        String[] parts = condition.split("=");
+        if (parts.length == 2) {
+            String columnName = parts[0].trim();
+            String conditionValue = parts[1].trim();
+
+            int columnIndex = -1;
+            for (int i = 0; i < rowValues.length; i++) {
+                if (rowValues[i].trim().equals(columnName)) {
+                    columnIndex = i;
+                    break;
+                }
+            }
+
+            if (columnIndex != -1) {
+                return rowValues[columnIndex].trim().equals(conditionValue);
+            } else {
+                System.out.println("La columna '" + columnName + "' no existe en el archivo");
+                return false;
+            }
+        } else {
+            System.out.println("La condición no tiene el formato correcto");
+            return false;
+        }
+    }
 
     public void deleteFromTable(String tableName, String condition) {
         File tableFile = new File(this.rutaTrabajo, tableName + ".csv");
+        File tempFile = new File(this.rutaTrabajo, "temp.csv");
 
-        if(tableFile.exists()){
-            System.out.println("El arch");
-        }
-    }
+        try (BufferedReader reader = new BufferedReader(new FileReader(tableFile));
+             BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))) {
 
+            String headerLine = reader.readLine();
+            if (headerLine != null) {
+                writer.write(headerLine);
+                writer.newLine();
 
+                String[] columnNames = headerLine.split(",");
 
-    public void dividir(String condition) {
-        String[] condicion_dividida = condition.split("=");
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String[] rowValues = line.split(",");
 
-        StringBuilder condicioncita = new StringBuilder();
+                    if (!evaluarCondicion(rowValues, condition)) {
+                        writer.write(line);
+                        writer.newLine();
+                    }
+                }
 
-        for (String conditions : condicion_dividida) {
-            condicioncita.append(conditions.trim()).append(" = "); // Añadir un signo igual después de cada subcadena
-        }
-
-        if (condicioncita.length() > 0) {
-            condicioncita.deleteCharAt(condicioncita.length() - 1);
-        }
-
-
-        System.out.println("Cadenas divididas: " + condicioncita.toString());
-    }
-
-
-
-    //funcion delete
-    private static boolean dividirCondicion(String value, String condition) {
-        String[] parts = condition.split("!=");
-        if (parts.length == 2) {
-            String conditionValue = parts[1].trim();
-            return !value.equals(conditionValue);
-        } else {
-            parts = condition.split("=");
-            if (parts.length == 2) {
-                String conditionValue = parts[1].trim();
-                return value.equals(conditionValue);
+                if (tableFile.delete() && tempFile.renameTo(tableFile)) {
+                    System.out.println("Filas eliminadas de la tabla '" + tableName + "' según la condición");
+                } else {
+                    System.out.println("Error al eliminar las filas de la tabla '" + tableName + "'.");
+                }
             } else {
-                System.out.println("Condicion no valida");
-                return false;
+                System.out.println("El archivo está vacío o no contiene una línea de encabezado");
             }
+        } catch (IOException e) {
+            System.out.println("Error al procesar el archivo: " + e.getMessage());
         }
     }
-
-
 }
